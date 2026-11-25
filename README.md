@@ -1,36 +1,52 @@
-# confidence-meter
+# Claude Confidence Bar
 
-Shows a confidence meter beside the Claude Code prompt (and in the status line) so you can see, while Claude works through a complex plan, how sure it is about the step it is on.
+See how sure Claude is about what it's doing, while it's doing it.
 
-Claude reports its confidence through a small tool, `report_confidence` (score 0-100, current step, one-line reason). The mod adds a short system-prompt section telling Claude to report at each step of a plan and whenever its confidence changes, and to calibrate honestly: 90+ only when verified, below 50 when guessing.
+```
+███████░░░ 72%↑   root cause found, fix not yet tested
+```
 
-- Green ≥75, yellow 50-74, red <50; an arrow shows the trend since the last report.
-- The reading dims once you send a new prompt, until Claude reports again.
-- A toast pops up if confidence drops below 40.
+When Claude works through a long, multi-step plan, it's hard to tell whether it's on solid ground or guessing. This plugin puts a small confidence bar next to your prompt so you can tell at a glance.
 
-This is the model's self-assessment, not a measured probability: treat it as a signal, not a guarantee.
+## How it works
+
+Claude scores its own confidence from 0 to 100 as it works. It reports a new score:
+
+- at the start of a plan and at each new step,
+- whenever something changes its view (a test fails, an assumption breaks, the root cause turns up),
+- before it finishes its turn.
+
+It's asked to be honest about it:
+
+| Score | Means |
+| --- | --- |
+| **90+** | Checked: tests pass or the behaviour has been seen working |
+| **60–80** | A sensible approach that hasn't been checked yet |
+| **under 50** | Guessing, blocked, or relying on unconfirmed assumptions |
+
+The bar is **green** from 75, **yellow** from 50 and **red** below 50. The arrow shows whether confidence went up (↑), down (↓) or stayed about the same (→) since the last report. Each score comes with a one-line reason. If confidence drops below 40, a short pop-up tells you.
+
+When you send a new message, the bar dims until Claude reports again, so an old score never passes for a current one.
+
+> The score is Claude's own estimate, not a measured probability. Treat it as a signal worth noticing, not a guarantee.
+
+## Where it shows
+
+- **Terminal and Claude desktop app:** right next to the prompt
+- **VS Code:** a line above the prompt
+- **Everywhere:** in the status line, with the reason
 
 ## Install
 
-In a terminal (works everywhere, including for the VS Code extension):
+In any terminal with the [Claude Code CLI](https://code.claude.com/docs/en/setup) installed:
 
 ```bash
 claude plugin marketplace add Msapkas/claude-confidence-bar
 claude plugin install confidence-meter@claude-confidence-bar
 ```
 
-Or, inside an interactive Claude Code terminal session:
+Then start a new Claude Code conversation. The bar appears as soon as Claude reports its first score.
 
-```
-/plugin install confidence-meter --marketplace Msapkas/claude-confidence-bar
-```
+## License
 
-Answer `y` to add the marketplace, then pick a scope (user scope makes it available in every project).
-
-Then start a new Claude Code session (in VS Code: open a new Claude conversation). The meter appears once Claude reports its first reading.
-
-## Where it shows
-
-- **Terminal (fullscreen layout) and Claude desktop app:** a colored bar right of the prompt.
-- **VS Code and the mobile apps:** a row above the prompt.
-- **Everywhere:** a status-line entry with the score and reason.
+MIT
