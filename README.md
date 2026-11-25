@@ -7,7 +7,7 @@
 <p align="center">See how sure Claude is about what it's doing, while it's doing it.</p>
 
 <p align="center">
-  <img src="assets/bars.svg" width="760" alt="The confidence bar in green at 92%, yellow at 64%, red at 31%, and dimmed after a new message">
+  <img src="assets/bars.svg" width="760" alt="The vertical confidence bar: green at 92%, yellow at 64.5% in fast mode with a live thought line, red at 31%, and dimmed after a new message">
 </p>
 
 ## Install
@@ -61,7 +61,7 @@ Either way, Claude is asked to be honest about the score:
 
 - **Arrow:** whether confidence went up (↑), down (↓) or stayed about the same (→) since the last report.
 - **Reason:** a short line saying why (always in fast mode, sometimes in slow).
-- **💭 Thought:** in fast mode, a dim second line with what Claude is thinking right now.
+- **💭 Thought:** in fast mode, a dim second line in the box with what Claude is thinking right now; the bar grows to match.
 - **Pop-up:** if confidence drops below 40, a short notice tells you.
 - **Dimmed:** when you send a new message, the bar dims and says "(last turn)" until Claude reports again, so an old score never passes for a current one.
 
@@ -69,7 +69,15 @@ Either way, Claude is asked to be honest about the score:
 
 ## Where it shows
 
-A centred line just above the prompt, in every Claude Code app: terminal, desktop, VS Code and mobile. It stays there all session; it steps aside only while Claude Code shows a feedback survey in that spot.
+Just above the prompt, in every Claude Code app: terminal, desktop, VS Code and mobile. A vertical bar on the left fills from the bottom, with the number and arrow at its middle, joined by a short line to a thin rounded box that holds the reason (and, in fast mode, the live thought). The bar is always as tall as the box.
+
+```
+▁▁        ╭──────────────────────╮
+██  72%↑─╴│ tests pass           │
+██        ╰──────────────────────╯
+```
+
+If there's no room for the box, it falls back to a single line. It stays there all session; it steps aside only while Claude Code shows a feedback survey in that spot.
 
 ## License
 

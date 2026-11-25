@@ -1,53 +1,60 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="760" height="236" viewBox="0 0 760 236" role="img" aria-label="The confidence bar in green at 92%, yellow at 64%, red at 31%, and dimmed after a new message">
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="378" viewBox="0 0 760 378" role="img" aria-label="The vertical confidence bar: green at 92%, yellow at 64.5% in fast mode with a live thought line, red at 31%, and dimmed after a new message">
   <style>
     text { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; font-size: 15px; dominant-baseline: middle; }
-    .note { fill: #8b949e; }
+    .note { fill: #c9d1d9; }
+    .dim { fill: #8b949e; }
     .tag { fill: #6e7681; font-size: 12px; }
   </style>
-  <rect x="0.5" y="0.5" width="759" height="235" rx="10" fill="#0d1117" stroke="#30363d"/>
-
-  <!-- green: 92%, 9 of 10 cells -->
-  <g transform="translate(0 44)" fill="#3fb950">
-    <text x="24" y="0">Confidence</text>
-    <g transform="translate(130 -8)">
-      <rect x="0" width="13" height="16" rx="2"/><rect x="16" width="13" height="16" rx="2"/><rect x="32" width="13" height="16" rx="2"/><rect x="48" width="13" height="16" rx="2"/><rect x="64" width="13" height="16" rx="2"/><rect x="80" width="13" height="16" rx="2"/><rect x="96" width="13" height="16" rx="2"/><rect x="112" width="13" height="16" rx="2"/><rect x="128" width="13" height="16" rx="2"/><rect x="144" width="13" height="16" rx="2" fill="#21262d"/>
+  <rect x="0.5" y="0.5" width="759" height="377" rx="10" fill="#0d1117" stroke="#30363d"/>
+  <g transform="translate(0 22)">
+    <rect x="28" y="1.0" width="22" height="20" rx="3" fill="#21262d"/>
+    <rect x="28" y="6.0" width="22" height="15.0" rx="3" fill="#3fb950"/>
+    <rect x="28" y="23.0" width="22" height="20" rx="3" fill="#21262d"/>
+    <rect x="28" y="23.0" width="22" height="20.0" rx="3" fill="#3fb950"/>
+    <rect x="28" y="45.0" width="22" height="20" rx="3" fill="#21262d"/>
+    <rect x="28" y="45.0" width="22" height="20.0" rx="3" fill="#3fb950"/>
+    <text x="64" y="33.0" fill="#3fb950" font-weight="700">92%↑</text>
+    <line x1="128" y1="33.0" x2="168" y2="33.0" stroke="#484f58" stroke-width="1.5"/>
+    <rect x="168" y="3" width="568" height="60" rx="9" fill="none" stroke="#30363d" stroke-width="1.5"/>
+    <text x="184" y="33.0" class="note">tests pass, behaviour checked</text>
+    <text x="722" y="33.0" class="tag" text-anchor="end">verified</text>
     </g>
-    <text x="300" y="0">92%↑</text>
-    <text x="356" y="0" class="note">— tests pass, behaviour checked</text>
-    <text x="736" y="0" class="tag" text-anchor="end">verified</text>
-  </g>
-
-  <!-- yellow: 64%, 6 of 10 cells -->
-  <g transform="translate(0 92)" fill="#d29922">
-    <text x="24" y="0">Confidence</text>
-    <g transform="translate(130 -8)">
-      <rect x="0" width="13" height="16" rx="2"/><rect x="16" width="13" height="16" rx="2"/><rect x="32" width="13" height="16" rx="2"/><rect x="48" width="13" height="16" rx="2"/><rect x="64" width="13" height="16" rx="2"/><rect x="80" width="13" height="16" rx="2"/><rect x="96" width="13" height="16" rx="2" fill="#21262d"/><rect x="112" width="13" height="16" rx="2" fill="#21262d"/><rect x="128" width="13" height="16" rx="2" fill="#21262d"/><rect x="144" width="13" height="16" rx="2" fill="#21262d"/>
+  <g transform="translate(0 104)">
+    <rect x="28" y="1.0" width="22" height="20" rx="3" fill="#21262d"/>
+    <rect x="28" y="23.0" width="22" height="20" rx="3" fill="#21262d"/>
+    <rect x="28" y="30.5" width="22" height="12.5" rx="3" fill="#d29922"/>
+    <rect x="28" y="45.0" width="22" height="20" rx="3" fill="#21262d"/>
+    <rect x="28" y="45.0" width="22" height="20.0" rx="3" fill="#d29922"/>
+    <rect x="28" y="67.0" width="22" height="20" rx="3" fill="#21262d"/>
+    <rect x="28" y="67.0" width="22" height="20.0" rx="3" fill="#d29922"/>
+    <text x="64" y="44.0" fill="#d29922" font-weight="700">64.5%→</text>
+    <line x1="128" y1="44.0" x2="168" y2="44.0" stroke="#484f58" stroke-width="1.5"/>
+    <rect x="168" y="3" width="568" height="82" rx="9" fill="none" stroke="#30363d" stroke-width="1.5"/>
+    <text x="184" y="33.0" class="note">fix written, not yet tested</text>
+    <text x="184" y="55.0" class="dim">💭 running the parser tests next</text>
+    <text x="722" y="33.0" class="tag" text-anchor="end">fast mode</text>
     </g>
-    <text x="300" y="0">64%→</text>
-    <text x="356" y="0" class="note">— fix written, not yet tested</text>
-    <text x="736" y="0" class="tag" text-anchor="end">unverified</text>
-  </g>
-
-  <!-- red: 31%, 3 of 10 cells -->
-  <g transform="translate(0 140)" fill="#f85149">
-    <text x="24" y="0">Confidence</text>
-    <g transform="translate(130 -8)">
-      <rect x="0" width="13" height="16" rx="2"/><rect x="16" width="13" height="16" rx="2"/><rect x="32" width="13" height="16" rx="2"/><rect x="48" width="13" height="16" rx="2" fill="#21262d"/><rect x="64" width="13" height="16" rx="2" fill="#21262d"/><rect x="80" width="13" height="16" rx="2" fill="#21262d"/><rect x="96" width="13" height="16" rx="2" fill="#21262d"/><rect x="112" width="13" height="16" rx="2" fill="#21262d"/><rect x="128" width="13" height="16" rx="2" fill="#21262d"/><rect x="144" width="13" height="16" rx="2" fill="#21262d"/>
+  <g transform="translate(0 208)">
+    <rect x="28" y="1.0" width="22" height="20" rx="3" fill="#21262d"/>
+    <rect x="28" y="23.0" width="22" height="20" rx="3" fill="#21262d"/>
+    <rect x="28" y="45.0" width="22" height="20" rx="3" fill="#21262d"/>
+    <rect x="28" y="47.5" width="22" height="17.5" rx="3" fill="#f85149"/>
+    <text x="64" y="33.0" fill="#f85149" font-weight="700">31%↓</text>
+    <line x1="128" y1="33.0" x2="168" y2="33.0" stroke="#484f58" stroke-width="1.5"/>
+    <rect x="168" y="3" width="568" height="60" rx="9" fill="none" stroke="#30363d" stroke-width="1.5"/>
+    <text x="184" y="33.0" class="note">assumption broke, rethinking</text>
+    <text x="722" y="33.0" class="tag" text-anchor="end">guessing</text>
     </g>
-    <text x="300" y="0">31%↓</text>
-    <text x="356" y="0" class="note">— assumption broke, rethinking</text>
-    <text x="736" y="0" class="tag" text-anchor="end">guessing</text>
-  </g>
-
-  <line x1="24" y1="170" x2="736" y2="170" stroke="#21262d"/>
-
-  <!-- stale: dimmed yellow after a new message -->
-  <g transform="translate(0 200)" fill="#d29922" opacity="0.45">
-    <text x="24" y="0">Confidence</text>
-    <g transform="translate(130 -8)">
-      <rect x="0" width="13" height="16" rx="2"/><rect x="16" width="13" height="16" rx="2"/><rect x="32" width="13" height="16" rx="2"/><rect x="48" width="13" height="16" rx="2"/><rect x="64" width="13" height="16" rx="2"/><rect x="80" width="13" height="16" rx="2"/><rect x="96" width="13" height="16" rx="2" fill="#21262d"/><rect x="112" width="13" height="16" rx="2" fill="#21262d"/><rect x="128" width="13" height="16" rx="2" fill="#21262d"/><rect x="144" width="13" height="16" rx="2" fill="#21262d"/>
+  <g transform="translate(0 290)" opacity="0.45">
+    <rect x="28" y="1.0" width="22" height="20" rx="3" fill="#21262d"/>
+    <rect x="28" y="23.0" width="22" height="20" rx="3" fill="#21262d"/>
+    <rect x="28" y="25.5" width="22" height="17.5" rx="3" fill="#d29922"/>
+    <rect x="28" y="45.0" width="22" height="20" rx="3" fill="#21262d"/>
+    <rect x="28" y="45.0" width="22" height="20.0" rx="3" fill="#d29922"/>
+    <text x="64" y="33.0" fill="#d29922" font-weight="700">64% </text>
+    <line x1="128" y1="33.0" x2="168" y2="33.0" stroke="#484f58" stroke-width="1.5"/>
+    <rect x="168" y="3" width="568" height="60" rx="9" fill="none" stroke="#30363d" stroke-width="1.5"/>
+    <text x="184" y="33.0" class="dim">(last turn) fix written, not yet tested</text>
+    <text x="722" y="33.0" class="tag" text-anchor="end">after a new message</text>
     </g>
-    <text x="300" y="0">64% (last turn)</text>
-  </g>
-  <text x="736" y="200" class="tag" text-anchor="end">after a new message</text>
 </svg>

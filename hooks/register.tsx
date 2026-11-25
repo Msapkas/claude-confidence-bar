@@ -32,9 +32,15 @@ function colorOf(score: number): string {
   return 'red'
 }
 
-function bar(score: number, width: number): string {
-  const filled = Math.round((score / 100) * width)
-  return '█'.repeat(filled) + '░'.repeat(width - filled)
+const LEVELS = ' ▁▂▃▄▅▆▇█'
+
+/** A vertical bar's cells, top first, filled in eighths: a glyph pair each, or '' where empty. */
+function column(score: number, rows: number): string[] {
+  const filled = Math.round((score / 100) * rows * 8)
+  return Array.from({ length: rows }, (_, i) => {
+    const level = Math.max(0, Math.min(8, filled - (rows - 1 - i) * 8))
+    return level === 0 ? '' : (LEVELS[level] ?? '█').repeat(2)
+  })
 }
 
 function trend(hist: readonly number[]): string {
@@ -153,31 +159,52 @@ export const register: Register = on => {
     return next(e)
   }).catch(($, e, next) => next(e))
 
-  // A centred row above the prompt: the one slot every app (terminal, desktop, VS Code, mobile) draws.
+  // The band above the prompt: the one slot every app (terminal, desktop, VS Code, mobile) draws.
+  // A vertical bar on the left with the number and arrow at its middle, joined by a short
+  // rule to a thin rounded box holding the reason and, in fast mode, the live thought.
   // It is always there; only a survey, which the band asks every row to yield to, hides it.
   on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
     if (e.props.hasSurvey) return next(e)
     const r = await read($, current)
     const m = await read($, modeAtom)
     const thought = m === 'fast' ? await read($, thoughtAtom) : ''
+    const hist = r === null ? [] : await read($, history)
     const { Box, Text } = $.ui.resolve(e)
-    let line
-    if (r === null) {
-      line = <Text dimColor>{`Confidence ${bar(0, 10)} --% — waiting for Claude's first report`}</Text>
-    } else {
-      const hist = await read($, history)
-      const pct = m === 'fast' ? r.score.toFixed(1) : String(Math.round(r.score))
-      const stale = r.isStale ? ' (last turn)' : ''
-      line = (
-        <Text color={colorOf(r.score)} dimColor={r.isStale}>
-          {`Confidence ${bar(r.score, 10)} ${pct}%${trend(hist)}${stale}${r.reason ? ` — ${r.reason}` : ''}`}
+
+    const score = r?.score ?? 0
+    const color = r === null ? undefined : colorOf(score)
+    const dim = r === null || r.isStale
+    // Fixed width, so the box beside it doesn't jump as the number changes.
+    const pct = r === null ? '--' : m === 'fast' ? score.toFixed(1) : String(Math.round(score))
+    const number = `${pct}%`.padStart(m === 'fast' ? 6 : 4) + (trend(hist) || ' ')
+    const stale = r?.isStale ? '(last turn) ' : ''
+    const headline = r === null ? "waiting for Claude's first report" : `${stale}${r.reason || 'Confidence'}`
+    const lines = thought ? [headline, `💭 ${thought}`] : [headline]
+
+    // The bar is as tall as the box: its two borders plus a row per line.
+    const rows = lines.length + 2
+    if (e.props.maxRows < rows) {
+      // Too little room for the box: one line, as before.
+      return (
+        <Text color={color} dimColor={dim} wrap="truncate-end">
+          {`${number.trim()} ${headline}${thought ? `  💭 ${thought}` : ''}`}
         </Text>
       )
     }
     return (
-      <Box width="100%" flexDirection="column" alignItems="center">
-        {line}
-        {thought ? <Text dimColor wrap="truncate-end">{`💭 ${thought}`}</Text> : null}
+      <Box width="100%" flexDirection="row" alignItems="center">
+        <Box flexDirection="column">
+          {column(score, rows).map(cell =>
+            cell ? <Text color={color} dimColor={dim}>{cell}</Text> : <Text dimColor>░░</Text>,
+          )}
+        </Box>
+        <Text color={color} dimColor={dim} bold>{` ${number}`}</Text>
+        <Text dimColor>{'─╴'}</Text>
+        <Box flexGrow={1} flexDirection="column" borderStyle="round" borderDimColor paddingX={1}>
+          {lines.map((l, i) => (
+            <Text dimColor={dim || i > 0} wrap="truncate-end">{l}</Text>
+          ))}
+        </Box>
       </Box>
     )
   })

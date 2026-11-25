@@ -11,6 +11,8 @@ const BAND = (surface: 'terminal' | 'desktop' | 'vscode' | 'mobile', hasSurvey =
   },
 }) as const
 
+const texts = async (ui: any) => (await ui.findAll({ type: 'Text' })).map((t: any) => t.text)
+
 function engine(on: any) {
   const log = { status: [] as (string | undefined)[], toast: [] as string[], tools: [] as any[], store: {} as Record<string, unknown>, clock: mock.clock(on) }
   on('store.get', (_: any, e: any) => ({ value: log.store[e.key] }))
@@ -41,11 +43,9 @@ test('adds guidance to the system prompt', async ($, on) => {
 
 test('a placeholder band before any report, on every surface', async ($, on) => {
   engine(on)
-  on('ui.render', ($: any, e: any) => { const { Text } = $.ui.resolve(e); return <Text>engine</Text> })
   for (const surface of ['terminal', 'desktop', 'vscode', 'mobile'] as const) {
     const ui = await $.ui.mount(BAND(surface))
-    const t = await ui.find({ type: 'Text', text: /Confidence/ })
-    expect(t?.text).toBe("Confidence ░░░░░░░░░░ --% — waiting for Claude's first report")
+    expect(await texts(ui)).toEqual(['░░', '░░', '░░', '  --% ', '─╴', "waiting for Claude's first report"])
     await ui.unmount()
   }
 })
@@ -60,8 +60,8 @@ test('a report draws the band on every surface, with trend', async ($, on) => {
   expect(log.toast).toEqual([])
   for (const surface of ['terminal', 'desktop', 'vscode', 'mobile'] as const) {
     const ui = await $.ui.mount(BAND(surface))
-    const t = await ui.find({ type: 'Text', text: /Confidence/ })
-    expect(t?.text).toBe('Confidence ████████░░ 82%↑ — tests pass')
+    // Vertical bar top to bottom, then the number with its arrow, the joining rule and the box.
+    expect(await texts(ui)).toEqual(['▄▄', '██', '██', '  82%↑', '─╴', 'tests pass'])
     await ui.unmount()
   }
 })
@@ -87,7 +87,7 @@ test('a new prompt marks the reading stale', async ($, on) => {
   await $.prompt.submit({ text: 'next' } as any)
 
   const ui = await $.ui.mount(BAND('desktop'))
-  expect((await ui.find({ type: 'Text', text: /Confidence/ }))?.text).toBe('Confidence ██████░░░░ 55% (last turn) — unverified')
+  expect(await texts(ui)).toEqual(['░░', '▅▅', '██', '  55% ', '─╴', '(last turn) unverified'])
   await ui.unmount()
 })
 
@@ -109,7 +109,7 @@ test('slow is the default: minimal guidance and integer scores', async ($, on) =
   expect(text.length < 200).toBe(true)
   await $.tool.call({ tool: TOOL, score: 71.6 } as any)
   const ui = await $.ui.mount(BAND('terminal'))
-  expect((await ui.find({ type: 'Text', text: /Confidence/ }))?.text).toBe('Confidence ███████░░░ 72%')
+  expect(await texts(ui)).toEqual(['▁▁', '██', '██', '  72% ', '─╴', 'Confidence'])
   await ui.unmount()
 })
 
@@ -122,7 +122,7 @@ test('/confidence-fast switches guidance, keeps decimals, and is remembered', as
   expect(out.sections.find(x => x.id === 'confidence-meter:guidance')!.text.includes('one-decimal')).toBe(true)
   await $.tool.call({ tool: TOOL, score: 72.46, reason: 'tests green' } as any)
   const ui = await $.ui.mount(BAND('vscode'))
-  expect((await ui.find({ type: 'Text', text: /Confidence/ }))?.text).toBe('Confidence ███████░░░ 72.5% — tests green')
+  expect(await texts(ui)).toEqual(['▁▁', '██', '██', '  72.5% ', '─╴', 'tests green'])
   await ui.unmount()
   expect(log.store.mode).toBe('fast')
 
@@ -157,4 +157,29 @@ test('a mode saved in an earlier session is used at start', async ($, on) => {
   await $.session.start({ cwd: '/', surface: 'terminal', isInteractive: true })
   const out = await $.prompt.compose({ model: 'm', promptModel: 'm', surfaces: ['terminal'], tools: [], outputStyle: null, traits: [] } as any)
   expect(out.sections.find(x => x.id === 'confidence-meter:guidance')!.text.includes('one-decimal')).toBe(true)
+})
+
+test('the bar grows with the box when a thought line shows', async ($, on) => {
+  const log = engine(on)
+  on('turn.step', async function* (_: any, e: any) {
+    yield { kind: 'text', index: 0, text: 'checking the parser' } as any
+    return { turnId: e.turnId, index: e.index, answer: '', toolUses: [], stopReason: 'end_turn' } as any
+  })
+  await $.session.start({ cwd: '/', surface: 'terminal', isInteractive: true })
+  await $.command.run({ command: 'confidence-fast', args: '' } as any)
+  await $.tool.call({ tool: TOOL, score: 50, reason: 'halfway' } as any)
+  for await (const _ of $.turn.step({ turnId: 't', index: 0, model: 'm', messages: [] } as any)) { /* drain */ }
+  await log.clock.advance(3000)
+  const ui = await $.ui.mount(BAND('desktop'))
+  expect(await texts(ui)).toEqual(['░░', '░░', '██', '██', '  50.0% ', '─╴', 'halfway', '💭 checking the parser'])
+  await ui.unmount()
+})
+
+test('falls back to one line when the band is too short', async ($, on) => {
+  engine(on)
+  await $.tool.call({ tool: TOOL, score: 90, reason: 'verified' } as any)
+  const short = { ...BAND('terminal'), props: { ...BAND('terminal').props, maxRows: 2 } }
+  const ui = await $.ui.mount(short as any)
+  expect(await texts(ui)).toEqual(['90% verified'])
+  await ui.unmount()
 })
