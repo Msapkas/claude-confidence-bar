@@ -1,0 +1,5 @@
+{
+  "name": "claude-confidence-bar",
+  "owner": { "name": "Msapkas" },
+  "plugins": [{ "name": "confidence-meter", "source": "./" }]
+}

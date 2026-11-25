@@ -1,0 +1,7 @@
+{
+  "name": "confidence-meter",
+  "version": "0.1.0",
+  "license": "MIT",
+  "description": "Shows Claude's self-reported confidence in its current step beside the prompt.",
+  "types": "./types/index.d.ts"
+}
