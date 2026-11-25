@@ -96,26 +96,10 @@ export const register: Register = on => {
     return next(e)
   }).catch(($, e, next) => next(e))
 
-  on('ui.render', { component: 'BesidePrompt' }, async ($, e, next) => {
-    const r = await read($, current)
-    if (r === null || e.props.maxColumns < 6) return next(e)
-    const hist = await read($, history)
-    const { Text } = $.ui.resolve(e)
-    const label = `${r.score}%${trend(hist)}`
-    const width = e.props.maxColumns >= label.length + 12 ? 10 : 0
-    return (
-      <Text color={colorOf(r.score)} dimColor={r.isStale}>
-        {width > 0 ? `${bar(r.score, width)} ` : ''}
-        {label}
-      </Text>
-    )
-  })
-
-  // VS Code and the phone apps have no slot beside the prompt: draw a row above it instead.
+  // A row above the prompt: the one slot every app (terminal, desktop, VS Code, mobile) draws.
   on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
-    if (e.surface === 'terminal' || e.surface === 'desktop') return next(e)
     const r = await read($, current)
-    if (r === null) return next(e)
+    if (r === null || e.props.hasSurvey) return next(e)
     const hist = await read($, history)
     const { Text } = $.ui.resolve(e)
     const stale = r.isStale ? ' (last turn)' : ''

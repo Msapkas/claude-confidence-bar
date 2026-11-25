@@ -1,7 +1,7 @@
 {
   "name": "confidence-meter",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "license": "MIT",
-  "description": "Shows Claude's self-reported confidence in its current step beside the prompt.",
+  "description": "Shows Claude's self-reported confidence in its current step above the prompt.",
   "types": "./types/index.d.ts"
 }

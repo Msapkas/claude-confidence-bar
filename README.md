@@ -6,7 +6,7 @@ See how sure Claude is about what it's doing, while it's doing it.
 ███████░░░ 72%↑   root cause found, fix not yet tested
 ```
 
-When Claude works through a long, multi-step plan, it's hard to tell whether it's on solid ground or guessing. This plugin puts a small confidence bar next to your prompt so you can tell at a glance.
+When Claude works through a long, multi-step plan, it's hard to tell whether it's on solid ground or guessing. This plugin puts a small confidence bar right above your prompt so you can tell at a glance.
 
 ## How it works
 
@@ -32,9 +32,7 @@ When you send a new message, the bar dims until Claude reports again, so an old 
 
 ## Where it shows
 
-- **Terminal and Claude desktop app:** right next to the prompt
-- **VS Code:** a line above the prompt
-- **Everywhere:** in the status line, with the reason
+A line just above the prompt, in every Claude Code app: terminal, desktop, VS Code and mobile. The score and reason also show in the status line.
 
 ## Install
 
