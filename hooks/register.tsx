@@ -6,6 +6,7 @@ import type { Mode, Reading } from '../types'
 const PLUGIN = 'confidence-meter'
 const TOOL = `mcp__${PLUGIN}__report_confidence`
 const THOUGHT_MS = 3000
+const REASON_MAX = 50
 
 const current = atom({ plugin: 'confidence-meter', key: 'current' } as const, null)
 const history = atom({ plugin: 'confidence-meter', key: 'history' } as const, [] as readonly number[])
@@ -16,9 +17,9 @@ const thoughtAtom = atom({ plugin: 'confidence-meter', key: 'thought' } as const
 // Slow: one bare integer a turn. Fast: roughly five times the calls, decimals and a reason.
 const GUIDANCE: Record<Mode, string> = {
   slow: `# Confidence
-Once, before ending a turn that did real work, call \`${TOOL}\` with an honest integer score. No reason needed. Don't mention it.`,
+Once, before ending a turn that did real work, call \`${TOOL}\` with an honest integer score and a `reason`: a summary of where you stand, 6 words or fewer, under 50 characters. Don't mention it.`,
   fast: `# Confidence (live)
-Call \`${TOOL}\` often: when starting work, after each thinking step, finding or tool result that moves your view, and before ending. Use one-decimal scores (e.g. 72.5) so small shifts show. Reason under 12 words. Calibrate: 90+ verified, 60-80 plausible but unchecked, <50 guessing or blocked. Never inflate. Don't mention it.`,
+Call \`${TOOL}\` often: when starting work, after each thinking step, finding or tool result that moves your view, and before ending. Use one-decimal scores (e.g. 72.5) so small shifts show. `reason`: a summary of your current state, 6 words or fewer, under 50 characters, no full sentences. Calibrate: 90+ verified, 60-80 plausible but unchecked, <50 guessing or blocked. Never inflate. Don't mention it.`,
 }
 
 const MODE_LINE: Record<Mode, string> = {
@@ -51,11 +52,19 @@ function trend(hist: readonly number[]): string {
   return '→'
 }
 
+/** One line cut to `max` characters at a word boundary, with an ellipsis if anything was lost. */
+function fit(text: string, max: number): string {
+  const t = text.replace(/\s+/g, ' ').trim()
+  if (t.length <= max) return t
+  const cut = t.slice(0, max - 1)
+  const space = cut.lastIndexOf(' ')
+  return (space > max / 2 ? cut.slice(0, space) : cut).replace(/[\s,;:.-]+$/, '') + '…'
+}
+
 /** The last non-empty line of the streamed text, cut to fit one row. */
-function lastLine(buf: string, max = 80): string {
+function lastLine(buf: string, max = 60): string {
   const lines = buf.split('\n').map(l => l.trim()).filter(Boolean)
-  const line = lines[lines.length - 1] ?? ''
-  return line.length > max ? '…' + line.slice(-(max - 1)) : line
+  return fit(lines[lines.length - 1] ?? '', max)
 }
 
 export const register: Register = on => {
@@ -142,7 +151,7 @@ export const register: Register = on => {
     const m = await read($, modeAtom)
     const clamped = Math.max(0, Math.min(100, raw))
     const score = m === 'fast' ? Math.round(clamped * 10) / 10 : Math.round(clamped)
-    const reason = String(input.reason ?? '').slice(0, 120)
+    const reason = fit(String(input.reason ?? ''), REASON_MAX)
     const reading: Reading = { score, reason, isStale: false }
     await update($, current, () => reading)
     await update($, history, prev => [...prev, score].slice(-20))
