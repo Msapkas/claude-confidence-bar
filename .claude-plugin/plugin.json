@@ -1,6 +1,6 @@
 {
   "name": "confidence-meter",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "license": "MIT",
   "description": "Shows Claude's self-reported confidence in its current step above the prompt.",
   "author": { "name": "Msapkas" },
