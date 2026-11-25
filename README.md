@@ -1,6 +1,10 @@
-# Claude Confidence Bar
+<p align="center">
+  <img src=".claude-plugin/icon.png" width="112" alt="Confidence bar icon">
+</p>
 
-See how sure Claude is about what it's doing, while it's doing it.
+<h1 align="center">Claude Confidence Bar</h1>
+
+<p align="center">See how sure Claude is about what it's doing, while it's doing it.</p>
 
 <p align="center">
   <img src="assets/bars.svg" width="760" alt="The confidence bar in green at 92%, yellow at 64%, red at 31%, and dimmed after a new message">
