@@ -1,5 +1,6 @@
 {
   "name": "claude-confidence-bar",
   "owner": { "name": "Msapkas" },
+  "description": "A confidence bar above the Claude Code prompt.",
   "plugins": [{ "name": "confidence-meter", "source": "./" }]
 }

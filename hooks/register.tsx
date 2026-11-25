@@ -35,12 +35,6 @@ function trend(hist: readonly number[]): string {
   return '→'
 }
 
-function statusText(r: Reading | null, hist: readonly number[]): string | undefined {
-  if (r === null) return undefined
-  const stale = r.isStale ? ' (last turn)' : ''
-  return `Confidence ${r.score}% ${trend(hist)}${stale} — ${r.reason}`
-}
-
 export const register: Register = on => {
   on('session.start', async ($, e, next) => {
     await $.tool.register({
@@ -58,8 +52,8 @@ export const register: Register = on => {
         required: ['score', 'reason'],
       },
     })
-    const r = await read($, current)
-    $.ui.status(statusText(r, await read($, history)))
+    // The bar above the prompt is the only display; clear any status line an older version set.
+    $.ui.status(undefined)
     return next(e)
   })
 
@@ -79,8 +73,7 @@ export const register: Register = on => {
     const step = String(input.step ?? '').slice(0, 60)
     const reading: Reading = { score, reason, step, isStale: false }
     await update($, current, () => reading)
-    const hist = await update($, history, prev => [...prev, score].slice(-20))
-    $.ui.status(statusText(reading, hist))
+    await update($, history, prev => [...prev, score].slice(-20))
     if (score < 40) $.ui.toast(`Claude's confidence dropped to ${score}%: ${reason}`)
     return { result: `Recorded ${score}%.` }
   }).catch(() => ({ result: 'Recorded.' }))
@@ -89,9 +82,7 @@ export const register: Register = on => {
   on('prompt.submit', async ($, e, next) => {
     const r = await read($, current)
     if (r !== null && !r.isStale) {
-      const s = { ...r, isStale: true }
-      await update($, current, () => s)
-      $.ui.status(statusText(s, await read($, history)))
+      await update($, current, () => ({ ...r, isStale: true }))
     }
     return next(e)
   }).catch(($, e, next) => next(e))

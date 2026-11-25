@@ -32,7 +32,7 @@ When you send a new message, the bar dims until Claude reports again, so an old 
 
 ## Where it shows
 
-A line just above the prompt, in every Claude Code app: terminal, desktop, VS Code and mobile. The score and reason also show in the status line.
+A line just above the prompt, in every Claude Code app: terminal, desktop, VS Code and mobile.
 
 ## Install
 
