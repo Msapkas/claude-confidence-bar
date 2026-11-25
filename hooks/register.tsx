@@ -1,20 +1,30 @@
 import { atom, read, update } from 'claude-code'
-import type { Register } from 'claude-code'
+import type { Register, Timer } from 'claude-code'
 
-import type { Reading } from '../types'
+import type { Mode, Reading } from '../types'
 
 const PLUGIN = 'confidence-meter'
 const TOOL = `mcp__${PLUGIN}__report_confidence`
+const THOUGHT_MS = 3000
 
 const current = atom({ plugin: 'confidence-meter', key: 'current' } as const, null)
 const history = atom({ plugin: 'confidence-meter', key: 'history' } as const, [] as readonly number[])
+const modeAtom = atom({ plugin: 'confidence-meter', key: 'mode' } as const, 'slow' as Mode)
+const thoughtAtom = atom({ plugin: 'confidence-meter', key: 'thought' } as const, '')
 
-const GUIDANCE = `# Confidence reporting
-A meter beside the user's prompt shows how confident you are in what you are currently doing. Keep it honest and current by calling the \`${TOOL}\` tool:
-- when you start a multi-step task or plan, and at each new step or phase;
-- whenever your confidence changes noticeably (a test fails, an assumption turns out wrong, you find the root cause, you verify something works);
-- before you finish a turn that did real work.
-Score 0-100 means how likely you think the current approach and its result are correct. Calibrate: 90+ only when verified (tests pass, behaviour observed); 60-80 for a reasonable but unverified approach; below 50 when guessing, blocked or working from unconfirmed assumptions. Never inflate it. Keep \`reason\` to one short sentence. The call is cheap; don't mention it in your replies. Skip it for trivial one-line answers.`
+// This text rides along with every request, so each mode keeps it as short as it can.
+// Slow: one bare integer a turn. Fast: roughly five times the calls, decimals and a reason.
+const GUIDANCE: Record<Mode, string> = {
+  slow: `# Confidence
+Once, before ending a turn that did real work, call \`${TOOL}\` with an honest integer score. No reason needed. Don't mention it.`,
+  fast: `# Confidence (live)
+Call \`${TOOL}\` often: when starting work, after each thinking step, finding or tool result that moves your view, and before ending. Use one-decimal scores (e.g. 72.5) so small shifts show. Reason under 12 words. Calibrate: 90+ verified, 60-80 plausible but unchecked, <50 guessing or blocked. Never inflate. Don't mention it.`,
+}
+
+const MODE_LINE: Record<Mode, string> = {
+  slow: 'Confidence bar: slow mode (one report per turn, minimal tokens).',
+  fast: 'Confidence bar: fast mode (live thoughts every 3 s, frequent decimal scores, about 5x the tokens of slow).',
+}
 
 function colorOf(score: number): string {
   if (score >= 75) return 'green'
@@ -35,32 +45,87 @@ function trend(hist: readonly number[]): string {
   return '→'
 }
 
+/** The last non-empty line of the streamed text, cut to fit one row. */
+function lastLine(buf: string, max = 80): string {
+  const lines = buf.split('\n').map(l => l.trim()).filter(Boolean)
+  const line = lines[lines.length - 1] ?? ''
+  return line.length > max ? '…' + line.slice(-(max - 1)) : line
+}
+
 export const register: Register = on => {
+  // Module-local, so a reload starts them over; session.start re-reads the mode.
+  let mode: Mode = 'slow'
+  let streamed = ''
+  let timer: Timer | undefined
+
   on('session.start', async ($, e, next) => {
     await $.tool.register({
       name: 'report_confidence',
       isDeferred: false,
-      description:
-        "Report your current confidence (0-100) in the step you are working on, shown to the user as a meter beside the prompt. Call it at each step of a multi-step plan and whenever your confidence changes. Returns immediately; it does nothing else.",
+      description: 'Show your confidence to the user.',
       inputSchema: {
         type: 'object',
         properties: {
-          score: { type: 'integer', minimum: 0, maximum: 100, description: 'Calibrated confidence, 0-100.' },
-          step: { type: 'string', description: 'A few words naming the current step.' },
-          reason: { type: 'string', description: 'One short sentence: why this number.' },
+          score: { type: 'number', minimum: 0, maximum: 100 },
+          reason: { type: 'string' },
         },
-        required: ['score', 'reason'],
+        required: ['score'],
       },
+    })
+    await $.command.register({ name: 'confidence-fast', description: 'Confidence bar: live thoughts and frequent decimal scores (more tokens).' })
+    await $.command.register({ name: 'confidence-slow', description: 'Confidence bar: one report per turn (fewest tokens).' })
+    const stored = await $.store.get('mode')
+    mode = stored === 'fast' ? 'fast' : 'slow'
+    await update($, modeAtom, () => mode)
+    // The live thought line: flush what streamed at most every 3 s, only in fast mode.
+    timer?.cancel()
+    let shown = ''
+    timer = $.clock.every(THOUGHT_MS, async () => {
+      if (mode !== 'fast') return
+      const line = lastLine(streamed)
+      if (line === shown) return
+      shown = line
+      await update($, thoughtAtom, () => line)
     })
     // The bar above the prompt is the only display; clear any status line an older version set.
     $.ui.status(undefined)
     return next(e)
   })
 
-  // Tell the model to use the meter.
+  // The mode is kept in the store, so it carries over to later sessions.
+  on('command.run', { command: 'confidence-fast' }, async $ => {
+    mode = 'fast'
+    await $.store.set('mode', 'fast')
+    await update($, modeAtom, () => 'fast' as Mode)
+    return { text: MODE_LINE.fast, context: [GUIDANCE.fast], isTextDisplayOnly: true as const }
+  })
+  on('command.run', { command: 'confidence-slow' }, async $ => {
+    mode = 'slow'
+    streamed = ''
+    await $.store.set('mode', 'slow')
+    await update($, modeAtom, () => 'slow' as Mode)
+    await update($, thoughtAtom, () => '')
+    return { text: MODE_LINE.slow, context: [GUIDANCE.slow], isTextDisplayOnly: true as const }
+  })
+
+  // Tell the model to use the meter, with the current mode's rules only.
   on('prompt.compose', async ($, e, next) => {
     const out = await next(e)
-    return { sections: [...out.sections, { id: `${PLUGIN}:guidance`, text: GUIDANCE, scope: 'session' as const }] }
+    const m = await read($, modeAtom)
+    return { sections: [...out.sections, { id: `${PLUGIN}:guidance`, text: GUIDANCE[m], scope: 'session' as const }] }
+  })
+
+  // Fast mode watches Claude's thinking and text as they stream; it costs no tokens.
+  on('turn.step', async function* ($, e, next) {
+    if (mode !== 'fast') return yield* next(e)
+    const it = next(e)
+    for (;;) {
+      const r = await it.next()
+      if (r.done) return r.value
+      const c = r.value
+      if (c.kind === 'thinking' || c.kind === 'text') streamed = (streamed + c.text).slice(-400)
+      yield c
+    }
   })
 
   // Answering at tool.call serves the tool without a permission prompt.
@@ -68,15 +133,16 @@ export const register: Register = on => {
     const input = e as unknown as Record<string, unknown>
     const raw = Number(input.score)
     if (!Number.isFinite(raw)) return { deny: 'score must be a number from 0 to 100' }
-    const score = Math.max(0, Math.min(100, Math.round(raw)))
+    const m = await read($, modeAtom)
+    const clamped = Math.max(0, Math.min(100, raw))
+    const score = m === 'fast' ? Math.round(clamped * 10) / 10 : Math.round(clamped)
     const reason = String(input.reason ?? '').slice(0, 120)
-    const step = String(input.step ?? '').slice(0, 60)
-    const reading: Reading = { score, reason, step, isStale: false }
+    const reading: Reading = { score, reason, isStale: false }
     await update($, current, () => reading)
     await update($, history, prev => [...prev, score].slice(-20))
-    if (score < 40) $.ui.toast(`Claude's confidence dropped to ${score}%: ${reason}`)
-    return { result: `Recorded ${score}%.` }
-  }).catch(() => ({ result: 'Recorded.' }))
+    if (score < 40) $.ui.toast(`Claude's confidence dropped to ${score}%${reason ? `: ${reason}` : ''}`)
+    return { result: 'ok' }
+  }).catch(() => ({ result: 'ok' }))
 
   // A new prompt makes the old reading stale until Claude reports again.
   on('prompt.submit', async ($, e, next) => {
@@ -87,17 +153,32 @@ export const register: Register = on => {
     return next(e)
   }).catch(($, e, next) => next(e))
 
-  // A row above the prompt: the one slot every app (terminal, desktop, VS Code, mobile) draws.
+  // A centred row above the prompt: the one slot every app (terminal, desktop, VS Code, mobile) draws.
+  // It is always there; only a survey, which the band asks every row to yield to, hides it.
   on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
+    if (e.props.hasSurvey) return next(e)
     const r = await read($, current)
-    if (r === null || e.props.hasSurvey) return next(e)
-    const hist = await read($, history)
-    const { Text } = $.ui.resolve(e)
-    const stale = r.isStale ? ' (last turn)' : ''
+    const m = await read($, modeAtom)
+    const thought = m === 'fast' ? await read($, thoughtAtom) : ''
+    const { Box, Text } = $.ui.resolve(e)
+    let line
+    if (r === null) {
+      line = <Text dimColor>{`Confidence ${bar(0, 10)} --% — waiting for Claude's first report`}</Text>
+    } else {
+      const hist = await read($, history)
+      const pct = m === 'fast' ? r.score.toFixed(1) : String(Math.round(r.score))
+      const stale = r.isStale ? ' (last turn)' : ''
+      line = (
+        <Text color={colorOf(r.score)} dimColor={r.isStale}>
+          {`Confidence ${bar(r.score, 10)} ${pct}%${trend(hist)}${stale}${r.reason ? ` — ${r.reason}` : ''}`}
+        </Text>
+      )
+    }
     return (
-      <Text color={colorOf(r.score)} dimColor={r.isStale}>
-        {`Confidence ${bar(r.score, 10)} ${r.score}%${trend(hist)}${stale}${r.reason ? ` — ${r.reason}` : ''}`}
-      </Text>
+      <Box width="100%" flexDirection="column" alignItems="center">
+        {line}
+        {thought ? <Text dimColor wrap="truncate-end">{`💭 ${thought}`}</Text> : null}
+      </Box>
     )
   })
 }

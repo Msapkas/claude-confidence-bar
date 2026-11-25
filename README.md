@@ -19,7 +19,7 @@ claude plugin marketplace add Msapkas/claude-confidence-bar
 claude plugin install confidence-meter@claude-confidence-bar
 ```
 
-Then start a new Claude Code conversation. The bar appears as soon as Claude reports its first score.
+Then start a new Claude Code conversation. The bar is there from the start, dimmed until Claude reports its first score.
 
 ## Why
 
@@ -27,13 +27,23 @@ When Claude works through a long, multi-step plan, it's hard to tell whether it'
 
 ## How it works
 
-Claude scores its own confidence from 0 to 100 as it works. It reports a new score:
+Claude scores its own confidence from 0 to 100. How often it reports depends on the mode.
 
-- at the start of a plan and at each new step,
-- whenever something changes its view (a test fails, an assumption breaks, the root cause turns up),
-- before it finishes its turn.
+## Modes
 
-It's asked to be honest about it:
+Switch with a slash command. Your choice is remembered for later sessions.
+
+| | `/confidence-slow` (default) | `/confidence-fast` |
+| --- | --- | --- |
+| **Reports** | Once, at the end of a turn that did real work | When it starts, after each thinking step or finding that moves its view, and at the end |
+| **Score** | Whole number, e.g. `72%` | One decimal, e.g. `72.5%`, so small shifts show |
+| **Reason** | Optional | A short line every time |
+| **Live thought** | No | The latest line of Claude's thinking, under the bar, refreshed every 3 seconds |
+| **Token cost** | Minimal | About 5× slow |
+
+The live thought line reads Claude's thinking as it streams, so it costs no tokens. Fast mode's extra cost comes from the more frequent reports and its longer instructions.
+
+Either way, Claude is asked to be honest about the score:
 
 | Score | Means |
 | --- | --- |
@@ -50,7 +60,8 @@ It's asked to be honest about it:
 | 🟥 Red | under 50 |
 
 - **Arrow:** whether confidence went up (↑), down (↓) or stayed about the same (→) since the last report.
-- **Reason:** each score comes with one short line saying why.
+- **Reason:** a short line saying why (always in fast mode, sometimes in slow).
+- **💭 Thought:** in fast mode, a dim second line with what Claude is thinking right now.
 - **Pop-up:** if confidence drops below 40, a short notice tells you.
 - **Dimmed:** when you send a new message, the bar dims and says "(last turn)" until Claude reports again, so an old score never passes for a current one.
 
@@ -58,7 +69,7 @@ It's asked to be honest about it:
 
 ## Where it shows
 
-A line just above the prompt, in every Claude Code app: terminal, desktop, VS Code and mobile.
+A centred line just above the prompt, in every Claude Code app: terminal, desktop, VS Code and mobile. It stays there all session; it steps aside only while Claude Code shows a feedback survey in that spot.
 
 ## License
 
