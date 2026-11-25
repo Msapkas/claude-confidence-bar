@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="236" viewBox="0 0 760 236" role="img" aria-label="The confidence bar in green at 92%, yellow at 64%, red at 31%, and dimmed after a new message">
+  <style>
+    text { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; font-size: 15px; dominant-baseline: middle; }
+    .note { fill: #8b949e; }
+    .tag { fill: #6e7681; font-size: 12px; }
+  </style>
+  <rect x="0.5" y="0.5" width="759" height="235" rx="10" fill="#0d1117" stroke="#30363d"/>
+
+  <!-- green: 92%, 9 of 10 cells -->
+  <g transform="translate(0 44)" fill="#3fb950">
+    <text x="24" y="0">Confidence</text>
+    <g transform="translate(130 -8)">
+      <rect x="0" width="13" height="16" rx="2"/><rect x="16" width="13" height="16" rx="2"/><rect x="32" width="13" height="16" rx="2"/><rect x="48" width="13" height="16" rx="2"/><rect x="64" width="13" height="16" rx="2"/><rect x="80" width="13" height="16" rx="2"/><rect x="96" width="13" height="16" rx="2"/><rect x="112" width="13" height="16" rx="2"/><rect x="128" width="13" height="16" rx="2"/><rect x="144" width="13" height="16" rx="2" fill="#21262d"/>
+    </g>
+    <text x="300" y="0">92%↑</text>
+    <text x="356" y="0" class="note">— tests pass, behaviour checked</text>
+    <text x="736" y="0" class="tag" text-anchor="end">verified</text>
+  </g>
+
+  <!-- yellow: 64%, 6 of 10 cells -->
+  <g transform="translate(0 92)" fill="#d29922">
+    <text x="24" y="0">Confidence</text>
+    <g transform="translate(130 -8)">
+      <rect x="0" width="13" height="16" rx="2"/><rect x="16" width="13" height="16" rx="2"/><rect x="32" width="13" height="16" rx="2"/><rect x="48" width="13" height="16" rx="2"/><rect x="64" width="13" height="16" rx="2"/><rect x="80" width="13" height="16" rx="2"/><rect x="96" width="13" height="16" rx="2" fill="#21262d"/><rect x="112" width="13" height="16" rx="2" fill="#21262d"/><rect x="128" width="13" height="16" rx="2" fill="#21262d"/><rect x="144" width="13" height="16" rx="2" fill="#21262d"/>
+    </g>
+    <text x="300" y="0">64%→</text>
+    <text x="356" y="0" class="note">— fix written, not yet tested</text>
+    <text x="736" y="0" class="tag" text-anchor="end">unverified</text>
+  </g>
+
+  <!-- red: 31%, 3 of 10 cells -->
+  <g transform="translate(0 140)" fill="#f85149">
+    <text x="24" y="0">Confidence</text>
+    <g transform="translate(130 -8)">
+      <rect x="0" width="13" height="16" rx="2"/><rect x="16" width="13" height="16" rx="2"/><rect x="32" width="13" height="16" rx="2"/><rect x="48" width="13" height="16" rx="2" fill="#21262d"/><rect x="64" width="13" height="16" rx="2" fill="#21262d"/><rect x="80" width="13" height="16" rx="2" fill="#21262d"/><rect x="96" width="13" height="16" rx="2" fill="#21262d"/><rect x="112" width="13" height="16" rx="2" fill="#21262d"/><rect x="128" width="13" height="16" rx="2" fill="#21262d"/><rect x="144" width="13" height="16" rx="2" fill="#21262d"/>
+    </g>
+    <text x="300" y="0">31%↓</text>
+    <text x="356" y="0" class="note">— assumption broke, rethinking</text>
+    <text x="736" y="0" class="tag" text-anchor="end">guessing</text>
+  </g>
+
+  <line x1="24" y1="170" x2="736" y2="170" stroke="#21262d"/>
+
+  <!-- stale: dimmed yellow after a new message -->
+  <g transform="translate(0 200)" fill="#d29922" opacity="0.45">
+    <text x="24" y="0">Confidence</text>
+    <g transform="translate(130 -8)">
+      <rect x="0" width="13" height="16" rx="2"/><rect x="16" width="13" height="16" rx="2"/><rect x="32" width="13" height="16" rx="2"/><rect x="48" width="13" height="16" rx="2"/><rect x="64" width="13" height="16" rx="2"/><rect x="80" width="13" height="16" rx="2"/><rect x="96" width="13" height="16" rx="2" fill="#21262d"/><rect x="112" width="13" height="16" rx="2" fill="#21262d"/><rect x="128" width="13" height="16" rx="2" fill="#21262d"/><rect x="144" width="13" height="16" rx="2" fill="#21262d"/>
+    </g>
+    <text x="300" y="0">64% (last turn)</text>
+  </g>
+  <text x="736" y="200" class="tag" text-anchor="end">after a new message</text>
+</svg>
