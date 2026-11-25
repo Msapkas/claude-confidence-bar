@@ -12,13 +12,22 @@ This is the model's self-assessment, not a measured probability: treat it as a s
 
 ## Install
 
-At the prompt of a Claude Code session (terminal or VS Code), run:
+In a terminal (works everywhere, including for the VS Code extension):
+
+```bash
+claude plugin marketplace add Msapkas/claude-confidence-bar
+claude plugin install confidence-meter@claude-confidence-bar
+```
+
+Or, inside an interactive Claude Code terminal session:
 
 ```
 /plugin install confidence-meter --marketplace Msapkas/claude-confidence-bar
 ```
 
-Answer `y` to add the marketplace, then pick a scope (user scope makes it available in every project). Start a new session and the meter appears once Claude reports its first reading.
+Answer `y` to add the marketplace, then pick a scope (user scope makes it available in every project).
+
+Then start a new Claude Code session (in VS Code: open a new Claude conversation). The meter appears once Claude reports its first reading.
 
 ## Where it shows
 
