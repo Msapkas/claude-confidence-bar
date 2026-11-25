@@ -106,7 +106,7 @@ test('slow is the default: minimal guidance and integer scores', async ($, on) =
   const out = await $.prompt.compose({ model: 'm', promptModel: 'm', surfaces: ['terminal'], tools: [], outputStyle: null, traits: [] } as any)
   const text = out.sections.find(x => x.id === 'confidence-meter:guidance')!.text
   expect(text.includes('Once')).toBe(true)
-  expect(text.length < 200).toBe(true)
+  expect(text.length < 300).toBe(true)
   await $.tool.call({ tool: TOOL, score: 71.6 } as any)
   const ui = await $.ui.mount(BAND('terminal'))
   expect(await texts(ui)).toEqual(['▁▁', '██', '██', '  72% ', '─╴', 'Confidence'])

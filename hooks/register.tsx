@@ -20,9 +20,9 @@ const thoughtAtom = atom({ plugin: 'confidence-meter', key: 'thought' } as const
 // Slow: one bare integer a turn. Fast: roughly five times the calls, decimals and a reason.
 const GUIDANCE: Record<Mode, string> = {
   slow: `# Confidence
-Once, before ending a turn that did real work, call \`${TOOL}\` with an honest integer score and a `reason`: a summary of where you stand, 6 words or fewer, under 50 characters. If the user is excited, enthusiastic or sharing a new idea and you share that energy, also pass `vibe: true`. Don't mention it.`,
+Once, before ending a turn that did real work, call \`${TOOL}\` with an honest integer score and a reason (6 words max). If the user's excited about a new idea and you share it, add vibe: true. Don't mention it.`,
   fast: `# Confidence (live)
-Call \`${TOOL}\` often: when starting work, after each thinking step, finding or tool result that moves your view, and before ending. Use one-decimal scores (e.g. 72.5) so small shifts show. `reason`: a summary of your current state, 6 words or fewer, under 50 characters, no full sentences. If the user is excited, enthusiastic or sharing a new idea and you share that energy, also pass `vibe: true`. Calibrate: 90+ verified, 60-80 plausible but unchecked, <50 guessing or blocked. Never inflate. Don't mention it.`,
+Call \`${TOOL}\` often: when starting work, after each thinking step, finding or tool result that moves your view, and before ending. Use one-decimal scores (e.g. 72.5) so small shifts show. The reason is a summary of your current state, 6 words or fewer, under 50 characters, no full sentences. If the user is excited, enthusiastic or sharing a new idea and you share that energy, also pass vibe: true. Calibrate: 90+ verified, 60-80 plausible but unchecked, <50 guessing or blocked. Never inflate. Don't mention it.`,
 }
 
 const MODE_LINE: Record<Mode, string> = {
@@ -201,7 +201,7 @@ export const register: Register = on => {
     const dim = r === null || r.isStale
     // Fixed width, so the box beside it doesn't jump as the number changes.
     const pct = r === null ? '--' : m === 'fast' ? score.toFixed(1) : String(Math.round(score))
-    const number = `${pct}%`.padStart(m === 'fast' ? 6 : 5) + (vibe ? '✨' : trend(hist) || ' ')
+    const number = `${pct}%`.padStart(m === 'fast' ? 6 : 4) + (vibe ? '✨' : trend(hist) || ' ')
     const stale = r?.isStale ? '(last turn) ' : ''
     const headline = r === null ? "waiting for Claude's first report" : `${stale}${r.reason || 'Confidence'}`
     const lines = thought ? [headline, `💭 ${thought}`] : [headline]
