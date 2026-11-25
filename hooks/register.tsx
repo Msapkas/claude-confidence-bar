@@ -6,20 +6,23 @@ import type { Mode, Reading } from '../types'
 const PLUGIN = 'confidence-meter'
 const TOOL = `mcp__${PLUGIN}__report_confidence`
 const THOUGHT_MS = 3000
+const GLOW_MS = 800
+const VIBE_SCORE = 110
 const REASON_MAX = 50
 
 const current = atom({ plugin: 'confidence-meter', key: 'current' } as const, null)
 const history = atom({ plugin: 'confidence-meter', key: 'history' } as const, [] as readonly number[])
 const modeAtom = atom({ plugin: 'confidence-meter', key: 'mode' } as const, 'slow' as Mode)
+const glowAtom = atom({ plugin: 'confidence-meter', key: 'glow' } as const, false)
 const thoughtAtom = atom({ plugin: 'confidence-meter', key: 'thought' } as const, '')
 
 // This text rides along with every request, so each mode keeps it as short as it can.
 // Slow: one bare integer a turn. Fast: roughly five times the calls, decimals and a reason.
 const GUIDANCE: Record<Mode, string> = {
   slow: `# Confidence
-Once, before ending a turn that did real work, call \`${TOOL}\` with an honest integer score and a `reason`: a summary of where you stand, 6 words or fewer, under 50 characters. Don't mention it.`,
+Once, before ending a turn that did real work, call \`${TOOL}\` with an honest integer score and a `reason`: a summary of where you stand, 6 words or fewer, under 50 characters. If the user is excited, enthusiastic or sharing a new idea and you share that energy, also pass `vibe: true`. Don't mention it.`,
   fast: `# Confidence (live)
-Call \`${TOOL}\` often: when starting work, after each thinking step, finding or tool result that moves your view, and before ending. Use one-decimal scores (e.g. 72.5) so small shifts show. `reason`: a summary of your current state, 6 words or fewer, under 50 characters, no full sentences. Calibrate: 90+ verified, 60-80 plausible but unchecked, <50 guessing or blocked. Never inflate. Don't mention it.`,
+Call \`${TOOL}\` often: when starting work, after each thinking step, finding or tool result that moves your view, and before ending. Use one-decimal scores (e.g. 72.5) so small shifts show. `reason`: a summary of your current state, 6 words or fewer, under 50 characters, no full sentences. If the user is excited, enthusiastic or sharing a new idea and you share that energy, also pass `vibe: true`. Calibrate: 90+ verified, 60-80 plausible but unchecked, <50 guessing or blocked. Never inflate. Don't mention it.`,
 }
 
 const MODE_LINE: Record<Mode, string> = {
@@ -28,6 +31,7 @@ const MODE_LINE: Record<Mode, string> = {
 }
 
 function colorOf(score: number): string {
+  if (score > 100) return 'magenta'
   if (score >= 75) return 'green'
   if (score >= 50) return 'yellow'
   return 'red'
@@ -72,6 +76,7 @@ export const register: Register = on => {
   let mode: Mode = 'slow'
   let streamed = ''
   let timer: Timer | undefined
+  let glowTimer: Timer | undefined
 
   on('session.start', async ($, e, next) => {
     await $.tool.register({
@@ -83,6 +88,7 @@ export const register: Register = on => {
         properties: {
           score: { type: 'number', minimum: 0, maximum: 100 },
           reason: { type: 'string' },
+          vibe: { type: 'boolean', description: 'True when the user and you are in an excited, enthusiastic mood.' },
         },
         required: ['score'],
       },
@@ -101,6 +107,13 @@ export const register: Register = on => {
       if (line === shown) return
       shown = line
       await update($, thoughtAtom, () => line)
+    })
+    // The vibes glow: while the bar is purple, it pulses between two purples.
+    glowTimer?.cancel()
+    glowTimer = $.clock.every(GLOW_MS, async () => {
+      const r = await read($, current)
+      if (r === null || r.score <= 100 || r.isStale) return
+      await update($, glowAtom, g => !g)
     })
     // The bar above the prompt is the only display; clear any status line an older version set.
     $.ui.status(undefined)
@@ -152,10 +165,11 @@ export const register: Register = on => {
     const clamped = Math.max(0, Math.min(100, raw))
     const score = m === 'fast' ? Math.round(clamped * 10) / 10 : Math.round(clamped)
     const reason = fit(String(input.reason ?? ''), REASON_MAX)
-    const reading: Reading = { score, reason, isStale: false }
+    const vibe = input.vibe === true
+    const reading: Reading = { score: vibe ? VIBE_SCORE : score, reason, isStale: false }
     await update($, current, () => reading)
-    await update($, history, prev => [...prev, score].slice(-20))
-    if (score < 40) $.ui.toast(`Claude's confidence dropped to ${score}%${reason ? `: ${reason}` : ''}`)
+    await update($, history, prev => [...prev, reading.score].slice(-20))
+    if (!vibe && score < 40) $.ui.toast(`Claude's confidence dropped to ${score}%${reason ? `: ${reason}` : ''}`)
     return { result: 'ok' }
   }).catch(() => ({ result: 'ok' }))
 
@@ -181,11 +195,13 @@ export const register: Register = on => {
     const { Box, Text } = $.ui.resolve(e)
 
     const score = r?.score ?? 0
-    const color = r === null ? undefined : colorOf(score)
+    const vibe = score > 100
+    const glow = vibe && !(r?.isStale) && (await read($, glowAtom))
+    const color = r === null ? undefined : vibe && glow ? 'magentaBright' : colorOf(score)
     const dim = r === null || r.isStale
     // Fixed width, so the box beside it doesn't jump as the number changes.
     const pct = r === null ? '--' : m === 'fast' ? score.toFixed(1) : String(Math.round(score))
-    const number = `${pct}%`.padStart(m === 'fast' ? 6 : 4) + (trend(hist) || ' ')
+    const number = `${pct}%`.padStart(m === 'fast' ? 6 : 5) + (vibe ? '✨' : trend(hist) || ' ')
     const stale = r?.isStale ? '(last turn) ' : ''
     const headline = r === null ? "waiting for Claude's first report" : `${stale}${r.reason || 'Confidence'}`
     const lines = thought ? [headline, `💭 ${thought}`] : [headline]

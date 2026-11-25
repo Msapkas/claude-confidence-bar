@@ -183,3 +183,17 @@ test('falls back to one line when the band is too short', async ($, on) => {
   expect(await texts(ui)).toEqual(['90% verified'])
   await ui.unmount()
 })
+
+test('a vibe report makes the bar 110% and purple, and it glows', async ($, on) => {
+  const log = engine(on)
+  await $.session.start({ cwd: '/', surface: 'terminal', isInteractive: true })
+  await $.tool.call({ tool: TOOL, score: 80, reason: 'great idea', vibe: true } as any)
+  let ui = await $.ui.mount(BAND('vscode'))
+  expect(await texts(ui)).toEqual(['██', '██', '██', ' 110%✨', '─╴', 'great idea'])
+  expect((await ui.find({ type: 'Text', text: /110%/ }))?.props?.color).toBe('magenta')
+  await ui.unmount()
+  await log.clock.advance(800)
+  ui = await $.ui.mount(BAND('vscode'))
+  expect((await ui.find({ type: 'Text', text: /110%/ }))?.props?.color).toBe('magentaBright')
+  await ui.unmount()
+})

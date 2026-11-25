@@ -1,5 +1,5 @@
 export type Reading = {
-  /** 0-100, Claude's own estimate; one decimal in fast mode. */
+  /** 0-100, Claude's own estimate (one decimal in fast mode), or 110 for good vibes: purple and glowing. */
   score: number
   /** Short note on what drives the number; may be empty in slow mode. */
   reason: string
@@ -18,6 +18,8 @@ declare module 'claude-code' {
       mode: Mode
       /** Latest line of Claude's live thinking or text, refreshed every 3 s in fast mode. */
       thought: string
+      /** Flips every 0.8 s while the vibes bar glows. */
+      glow: boolean
     }
   }
 }

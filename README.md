@@ -58,7 +58,9 @@ Either way, Claude is asked to be honest about the score:
 | 🟩 Green | 75 and up |
 | 🟨 Yellow | 50 to 74 |
 | 🟥 Red | under 50 |
+| 🟪 Glowing purple | **110%**, the vibes bar |
 
+- **Vibes:** when you're excited, share a new idea or the mood is enthusiastic and Claude feels it too, the bar goes to 110%, turns purple, pulses and shows ✨. The next normal report brings it back.
 - **Arrow:** whether confidence went up (↑), down (↓) or stayed about the same (→) since the last report.
 - **Reason:** a short line saying why (always in fast mode, sometimes in slow).
 - **💭 Thought:** in fast mode, a dim second line in the box with what Claude is thinking right now; the bar grows to match.
